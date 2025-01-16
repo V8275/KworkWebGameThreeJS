@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="Styles.css">
     <title>Three.js Ingredients</title>
     <style>
         body { margin: 0; }
@@ -18,11 +19,11 @@
 </head>
 <body>
     <div id="buttonContainer">
+        <div id="currencyDisplay">Валюта: 0</div>
         <button id="categoryButton">Жиры</button>
     </div>
     <canvas id="canvas"></canvas>
     <script src="https://threejs.org/examples/fonts/helvetiker_regular.typeface.json"></script>
-    <div id="currencyDisplay">Валюта: 0</div>
-    <script src="script.js"></script>
+    <script type="module" src="main.js"></script> <!-- Изменено на main.js как модуль -->
 </body>
 </html>

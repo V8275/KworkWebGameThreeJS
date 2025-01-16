@@ -1,0 +1,14 @@
+#buttonContainer {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1;
+    display: flex; /* Добавлено для выравнивания в строку */
+    align-items: center; /* Центрирует элементы по вертикали */
+}
+
+#currencyDisplay
+{
+    color: rgb(16, 17, 17);
+    margin-right: 20%;
+}

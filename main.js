@@ -102,10 +102,12 @@ function onMouseClick(event) {
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, camera);
 
-    const intersects = raycaster.intersectObjects(hexObjects.map(hex => hex.hexMesh));
+    // Проверяем пересечения с объектами в обоих гридах
+    const mainIntersects = raycaster.intersectObjects(hexObjects.map(hex => hex.hexMesh));
+    const cartIntersects = raycaster.intersectObjects(cartGrid.getHexObjects().map(hex => hex.hexMesh));
 
-    if (intersects.length > 0) {
-        const intersectedHex = intersects[0].object;
+    if (mainIntersects.length > 0) {
+        const intersectedHex = mainIntersects[0].object;
         const hexObject = hexObjects.find(hex => hex.hexMesh === intersectedHex);
 
         if (hexObject) {
@@ -115,20 +117,22 @@ function onMouseClick(event) {
             cartGrid.getHexObjects().forEach(hex => {
                 scene.add(hex.hexMesh); // Добавляем объект в корзину
             });
-        } else {
-            // Если hexObject не найден, это означает, что объект уже в корзине
-            const cartHexObject = cartGrid.getHexObjects().find(hex => hex.hexMesh === intersectedHex);
-            if (cartHexObject) {
-                // Перемещаем объект из cartGrid обратно в mainGrid
-                mainGrid.moveHexObject(cartGrid, cartHexObject, scene);
-                scene.remove(intersectedHex); // Убираем объект из сцены
-                mainGrid.getHexObjects().forEach(hex => {
-                    scene.add(hex.hexMesh); // Добавляем объект обратно в основную сетку
-                });
-            }
+        }
+    } else if (cartIntersects.length > 0) {
+        const intersectedHex = cartIntersects[0].object;
+        const cartHexObject = cartGrid.getHexObjects().find(hex => hex.hexMesh === intersectedHex);
+
+        if (cartHexObject) {
+            // Перемещаем объект из cartGrid обратно в mainGrid
+            mainGrid.moveHexObject(cartGrid, cartHexObject, scene);
+            scene.remove(intersectedHex); // Убираем объект из сцены
+            mainGrid.getHexObjects().forEach(hex => {
+                scene.add(hex.hexMesh); // Добавляем объект обратно в основную сетку
+            });
         }
     }
 }
+
 
 
 

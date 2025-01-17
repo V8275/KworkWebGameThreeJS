@@ -3,6 +3,8 @@ let scene, camera, renderer, fats = 0, proteins = 0, carbohydrates = 0;
 let hexObjects = []; // Массив для хранения объектов HexObject
 let mainGrid, cartGrid;
 let currentCategory = null; // Переменная для хранения текущей категории
+let tempGrid = []; // Глобальный массив для хранения невидимых гексов
+
 
 // Импортируем функции из других файлов
 import { HexGrid } from './Hexgrid.js';
@@ -72,18 +74,10 @@ function placeIngredientsOnHexagons() {
         { fats: 6, proteins: 3, carbohydrates: 16, categories: ['жиры', 'сладкое'] },
         // Добавьте другие ингредиенты здесь
     ];
-    cartGrid = new HexGrid(null, new THREE.Vector3(0, -2, 0));
-    mainGrid = new HexGrid(ingredients, new THREE.Vector3(0, 0, 0)); // Передаем ингредиенты в HexGrid
+    cartGrid = new HexGrid(null, new THREE.Vector3(0, -3, 0), 27);
+    mainGrid = new HexGrid(ingredients, new THREE.Vector3(0, 0, 0), 27); // Передаем ингредиенты в HexGrid
     hexObjects = mainGrid.getHexObjects(); // Получаем массив объектов
     updateVisibleHexes(); // Обновляем видимые гексы после инициализации
-}
-
-// Функция для наклона всех объектов на сцене
-function tiltAllHexes(angle) {
-    const radians = THREE.MathUtils.degToRad(angle); // Преобразуем градусы в радианы
-    hexObjects.forEach(hex => {
-        hex.hexMesh.rotation.x += radians; // Наклоняем по оси X
-    });
 }
 
 // Функция анимации
@@ -101,8 +95,13 @@ function onMouseClick(event) {
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, camera);
 
-    // Проверяем пересечения с объектами в обоих гридах
-    const mainIntersects = raycaster.intersectObjects(hexObjects.map(hex => hex.hexMesh));
+    // Проверяем пересечения с объектами в основном гриде, исключая временные объекты
+    const mainIntersects = raycaster.intersectObjects(
+        hexObjects
+            .filter(hex => !tempGrid.includes(hex)) // Исключаем невидимые гексы
+            .map(hex => hex.hexMesh)
+    );
+
     const cartIntersects = raycaster.intersectObjects(cartGrid.getHexObjects().map(hex => hex.hexMesh));
 
     if (mainIntersects.length > 0) {
@@ -111,7 +110,7 @@ function onMouseClick(event) {
 
         if (hexObject) {
             // Перемещаем объект из mainGrid в cartGrid
-            cartGrid.moveHexObject(mainGrid, hexObject, scene);
+            cartGrid.moveHexObject(mainGrid, hexObject, scene, tempGrid);
             scene.remove(intersectedHex); // Убираем объект из сцены
             cartGrid.getHexObjects().forEach(hex => {
                 scene.add(hex.hexMesh); // Добавляем объект в корзину
@@ -123,7 +122,7 @@ function onMouseClick(event) {
 
         if (cartHexObject) {
             // Перемещаем объект из cartGrid обратно в mainGrid
-            mainGrid.moveHexObject(cartGrid, cartHexObject, scene);
+            mainGrid.moveHexObject(cartGrid, cartHexObject, scene, tempGrid);
             scene.remove(intersectedHex); // Убираем объект из сцены
             mainGrid.getHexObjects().forEach(hex => {
                 scene.add(hex.hexMesh); // Добавляем объект обратно в основную сетку
@@ -131,6 +130,7 @@ function onMouseClick(event) {
         }
     }
 }
+
 
 window.setCategory = function(category) {
     currentCategory = category; // Обновляем текущую категорию
@@ -143,22 +143,44 @@ function updateVisibleHexes() {
         scene.remove(hex.hexMesh);
     });
 
-    // Фильтруем гексы по текущей категории
-    const filteredHexes = currentCategory 
-        ? mainGrid.hexObjects.filter(hex => hex.categories.includes(currentCategory))
-        : mainGrid.hexObjects;
+    mainGrid.addHexObjects(getHiddenHexes());
 
-    // Добавляем отфильтрованные гексы обратно в сцену
-    filteredHexes.forEach(hex => {
-        scene.add(hex.hexMesh);
+    // Очищаем временный массив
+    tempGrid = [];
+
+    // Фильтруем гексы по текущей категории
+    const filteredHexes = mainGrid.hexObjects.filter(hex => {
+        const isVisible = currentCategory ? hex.categories.includes(currentCategory) : true;
+        if (!isVisible) {
+            tempGrid.push(hex); // Добавляем невидимые гексы в tempGrid
+        }
+        return isVisible;
     });
+
+    mainGrid.removeHexObjects(getHiddenHexes());
+
+    // Обновляем позиции видимых гексов
+    filteredHexes.forEach((hex) => {
+        mainGrid.updateHexPositions(tempGrid);
+        scene.add(hex.hexMesh); // Добавляем гекс в сцену
+    });
+    
+    console.log(getHiddenHexes());
+    console.log(`Количество объектов в mainGrid: ${getMainGridObjectCount()}`);
+    // Обновляем позиции всех гексов в mainGrid, если это необходимо
+     // Это может быть не нужно, если позиции уже установлены
 }
 
+function getHiddenHexes() {
+    return tempGrid; // Возвращаем массив скрытых гексов
+}
+
+function getMainGridObjectCount() {
+    return mainGrid.hexObjects.length; // Возвращаем количество объектов в mainGrid
+}
 
 // Запускаем инициализацию
 init();
 
 // Запускаем анимацию
 animate();
-
-tiltAllHexes(27);

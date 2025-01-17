@@ -1,11 +1,13 @@
 export class HexObject {
-    constructor(model, fats, proteins, carbohydrates, targetPosition) {
+    constructor(model, fats, proteins, carbohydrates, targetPosition, angle) {
+        
         this.model = model; // Модель объекта
         this.fats = fats; // Жиры
         this.proteins = proteins; // Белки
         this.carbohydrates = carbohydrates; // Углеводы
         this.categories = []; // Категории
         this.targetPosition = targetPosition; // Позиция, куда переносить объект
+        this.angle = angle; // Угол вращения в радианах
         this.init();
     }
 
@@ -14,6 +16,7 @@ export class HexObject {
         const geometry = new THREE.CylinderGeometry(0.5, 0.5, 0.05, 6);
         const material = new THREE.MeshStandardMaterial({ color: 0x00ff00, flatShading: true });
         this.hexMesh = new THREE.Mesh(geometry, material);
+        this.hexMesh.rotation.x = THREE.MathUtils.degToRad(this.angle);
 
         this.hexMesh.castShadow = true;
         this.hexMesh.receiveShadow = false;

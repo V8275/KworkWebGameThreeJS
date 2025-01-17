@@ -2,6 +2,7 @@
 let scene, camera, renderer, fats = 0, proteins = 0, carbohydrates = 0;
 let hexObjects = []; // Массив для хранения объектов HexObject
 let mainGrid, cartGrid;
+let currentCategory = null; // Переменная для хранения текущей категории
 
 // Импортируем функции из других файлов
 import { HexGrid } from './Hexgrid.js';
@@ -74,9 +75,7 @@ function placeIngredientsOnHexagons() {
     cartGrid = new HexGrid(null, new THREE.Vector3(0, -2, 0));
     mainGrid = new HexGrid(ingredients, new THREE.Vector3(0, 0, 0)); // Передаем ингредиенты в HexGrid
     hexObjects = mainGrid.getHexObjects(); // Получаем массив объектов
-    hexObjects.forEach(hex => {
-        scene.add(hex.hexMesh); // Добавляем гекс в сцену
-    });
+    updateVisibleHexes(); // Обновляем видимые гексы после инициализации
 }
 
 // Функция для наклона всех объектов на сцене
@@ -133,7 +132,27 @@ function onMouseClick(event) {
     }
 }
 
+window.setCategory = function(category) {
+    currentCategory = category; // Обновляем текущую категорию
+    updateVisibleHexes(); // Обновляем видимые гексы
+};
 
+function updateVisibleHexes() {
+    // Удаляем все гексы из сцены
+    hexObjects.forEach(hex => {
+        scene.remove(hex.hexMesh);
+    });
+
+    // Фильтруем гексы по текущей категории
+    const filteredHexes = currentCategory 
+        ? mainGrid.hexObjects.filter(hex => hex.categories.includes(currentCategory))
+        : mainGrid.hexObjects;
+
+    // Добавляем отфильтрованные гексы обратно в сцену
+    filteredHexes.forEach(hex => {
+        scene.add(hex.hexMesh);
+    });
+}
 
 
 // Запускаем инициализацию

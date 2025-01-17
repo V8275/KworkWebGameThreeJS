@@ -42,6 +42,10 @@ export class HexObject {
         }
     }
 
+    setTarget(target){
+        this.targetPosition = target;
+    }
+
     getInfo() {
         return {
             fats: this.fats,
@@ -52,16 +56,19 @@ export class HexObject {
     }
 
     handleClick() {
-        // Перемещение объекта к целевой позиции
-        this.moveToTarget();
+        // Перемещение объекта к целевой позиции с callback
+        this.moveToTarget(() => {
+            console.log("Анимация завершена!");
+            // Здесь можно выполнить дополнительные действия
+        });
     }
 
-    moveToTarget() {
+    moveToTarget(callback) {
         // Запускаем анимацию
-        this.animateMovement();
+        this.animateMovement(callback);
     }
 
-    animateMovement() {
+    animateMovement(callback) {
         const animationSpeed = 0.1; // Скорость анимации
         const target = new THREE.Vector3(this.targetPosition.x, this.targetPosition.y, this.targetPosition.z);
 
@@ -77,6 +84,11 @@ export class HexObject {
                 // Убедитесь, что объект точно на целевой позиции
                 this.hexMesh.position.copy(target);
                 this.currentPosition.copy(target);
+                
+                // Вызываем callback, когда анимация завершена
+                if (callback) {
+                    callback();
+                }
             }
         };
 

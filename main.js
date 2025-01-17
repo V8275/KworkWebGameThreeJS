@@ -1,17 +1,25 @@
 // Объявляем глобальные переменные
 let scene, camera, renderer, fats = 0, proteins = 0, carbohydrates = 0;
 let hexObjects = []; // Массив для хранения объектов HexObject
-const targetPosition = new THREE.Vector3(-2, -2, 0); // Задайте целевую позицию
-let selectedCategory = null; // Переменная для хранения выбранной категории
+let mainGrid, cartGrid;
 
 // Импортируем функции из других файлов
-import { HexObject } from './ingridient.js';
+import { HexGrid } from './Hexgrid.js';
 
 // Функция инициализации
 function init() {
     // Создаем сцену, камеру и рендерер
     scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const aspect = window.innerWidth / window.innerHeight;
+    const frustumSize = 10; // Размер фрустрации
+    camera = new THREE.OrthographicCamera(
+        frustumSize * aspect / - 2, 
+        frustumSize * aspect / 2, 
+        frustumSize / 2, 
+        frustumSize / - 2, 
+        1, 
+        1000
+    );
     renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas') });
 
     renderer.setSize(window.innerWidth, window.innerHeight);
@@ -33,122 +41,43 @@ function init() {
     placeIngredientsOnHexagons();
 
     // Добавляем обработчик кликов
-    window.addEventListener('click', onMouseClick);
-}
-
-// Глобальная функция для установки выбранной категории
-window.setCategory = function(category) {
-    selectedCategory = category;
-    updateVisibleHexes();
-};
-
-// Функция для обновления видимости объектов
-function updateVisibleHexes() {
-    hexObjects.forEach(hex => {
-        if (selectedCategory === null || hex.categories.includes(selectedCategory)) {
-            hex.hexMesh.visible = true; // Показываем объект
-        } else {
-            hex.hexMesh.visible = false; // Скрываем объект
-        }
-    });
+     window.addEventListener('click', onMouseClick);
 }
 
 // Функция для размещения ингредиентов на гексах
 function placeIngredientsOnHexagons() {
     const ingredients = [
         {fats: 5, proteins: 30, carbohydrates: 0, categories: ['белки'] },
-        {fats: 10, proteins: 25, carbohydrates: 0, categories: ['белки'] },
-        {fats: 15, proteins: 20, carbohydrates: 0, categories: ['жиры', 'белки'] },
-        {fats: 20, proteins: 3, carbohydrates: 12, categories: ['жиры', 'овощи'] },
-        {fats: 0, proteins: 3, carbohydrates: 7, categories: ['овощи'] },
-        {fats: 0, proteins: 1, carbohydrates: 10, categories: ['овощи'] },
-        {fats: 2, proteins: 8, carbohydrates: 50, categories: ['углеводы', 'хрустящие'] },
-        {fats: 0, proteins: 2, carbohydrates: 45, categories: ['углеводы'] },
-        {fats: 2, proteins: 7, carbohydrates: 40, categories: ['углеводы'] },
-        {fats: 15, proteins: 5, carbohydrates: 5, categories: ['жиры', 'хрустящие'] },
-        {fats: 10, proteins: 2, carbohydrates: 60, categories: ['сладкое'] },
-        {fats: 8, proteins: 3, carbohydrates: 25, categories: ['сладкое', 'мягкое'] },
-        {fats: 0, proteins: 1, carbohydrates: 27, categories: ['углеводы', 'сладкое'] },
-        {fats: 0, proteins: 0, carbohydrates: 25, categories: ['углеводы', 'сладкое'] },
-        {fats: 4, proteins: 10, carbohydrates: 5, categories: ['белки', 'мягкое'] },
-        {fats: 1, proteins: 11, carbohydrates: 4, categories: ['белки', 'мягкое'] },
-        {fats: 0, proteins: 1, carbohydrates: 3, categories: ['овощи'] },
-        {fats: 0, proteins: 1, carbohydrates: 6, categories: ['овощи'] },
-        {fats: 10, proteins: 2, carbohydrates: 50, categories: ['жиры', 'хрустящие'] },
-        {fats: 0, proteins: 2, carbohydrates: 60, categories: ['сладкое', 'углеводы'] },
-        {fats: 6, proteins: 3, carbohydrates: 16, categories: ['жиры', 'сладкое'] },
+        
+        { fats: 10, proteins: 25, carbohydrates: 0, categories: ['белки'] },
+        { fats: 15, proteins: 20, carbohydrates: 0, categories: ['жиры', 'белки'] },
+        { fats: 20, proteins: 3, carbohydrates: 12, categories: ['жиры', 'овощи'] },
+        { fats: 0, proteins: 3, carbohydrates: 7, categories: ['овощи'] },
+        { fats: 0, proteins: 1, carbohydrates: 10, categories: ['овощи'] },
+        { fats: 2, proteins: 8, carbohydrates: 50, categories: ['углеводы', 'хрустящие'] },
+        { fats: 0, proteins: 2, carbohydrates: 45, categories: ['углеводы'] },
+        { fats: 2, proteins: 7, carbohydrates: 40, categories: ['углеводы'] },
+        { fats: 15, proteins: 5, carbohydrates: 5, categories: ['жиры', 'хрустящие'] },
+        { fats: 10, proteins: 2, carbohydrates: 60, categories: ['сладкое'] },
+        { fats: 8, proteins: 3, carbohydrates: 25, categories: ['сладкое', 'мягкое'] },
+        { fats: 0, proteins: 1, carbohydrates: 27, categories: ['углеводы', 'сладкое'] },
+        { fats: 0, proteins: 0, carbohydrates: 25, categories: ['углеводы', 'сладкое'] },
+        { fats: 4, proteins: 10, carbohydrates: 5, categories: ['белки', 'мягкое'] },
+        { fats: 1, proteins: 11, carbohydrates: 4, categories: ['белки', 'мягкое'] },
+        { fats: 0, proteins: 1, carbohydrates: 3, categories: ['овощи'] },
+        { fats: 0, proteins: 1, carbohydrates: 6, categories: ['овощи'] },
+        { fats: 10, proteins: 2, carbohydrates: 50, categories: ['жиры', 'хрустящие'] },
+        { fats: 0, proteins: 2, carbohydrates: 60, categories: ['сладкое', 'углеводы'] },
+        { fats: 6, proteins: 3, carbohydrates: 16, categories: ['жиры', 'сладкое'] },
+        // Добавьте другие ингредиенты здесь
     ];
-    
-    ingredients.forEach(ingredient => {
-        NewHex(null, ingredient.fats, ingredient.proteins, ingredient.carbohydrates, ingredient.categories);
+    cartGrid = new HexGrid(null, new THREE.Vector3(0, -2, 0));
+    mainGrid = new HexGrid(ingredients, new THREE.Vector3(0, 0, 0)); // Передаем ингредиенты в HexGrid
+    hexObjects = mainGrid.getHexObjects(); // Получаем массив объектов
+    hexObjects.forEach(hex => {
+        scene.add(hex.hexMesh); // Добавляем гекс в сцену
     });
 }
-
-function NewHex(Object, fats, proteins, carbohydrates, categories) {
-    const hex = new HexObject(Object, fats, proteins, carbohydrates, targetPosition);
-
-    categories.forEach(category => hex.addCategory(category));
-    // Добавляем созданный объект в массив
-    hexObjects.push(hex);
-    
-    // Добавляем гекс в сцену
-    scene.add(hex.hexMesh);
-    
-    // Позиционирование гекса
-    positionHex(hex, 1);
-}
-
-// Функция для позиционирования гекса
-function positionHex(hex, height = 0) {
-    const hexWidth = 1; // Ширина одного гекса
-    const hexHeight = 0.5; // Высота одного гекса
-
-    const row = Math.floor(hexObjects.length / 5); // Количество гексов в ряду
-    const col = hexObjects.length % 5; // Индекс гекса в ряду
-
-    // Смещение по оси X и Y
-    const xOffset = (col * hexWidth) - (2 * hexWidth) + (row % 2) * (hexWidth / 2); // Добавлено смещение для чередующихся рядов
-    const yOffset = (row * hexHeight); // Убираем шахматный порядок, чтобы гексы шли вниз
-
-    // Устанавливаем позицию с учетом высоты
-    hex.hexMesh.position.set(xOffset, yOffset + height, 0);
-}
-
-function onMouseClick(event) {
-    // Преобразуем координаты мыши в нормализованные устройства координат
-    const mouse = new THREE.Vector2(
-        (event.clientX / window.innerWidth) * 2 - 1,
-        -(event.clientY / window.innerHeight) * 2 + 1
-    );
-
-    // Создаем луч для raycasting
-    const raycaster = new THREE.Raycaster();
-    raycaster.setFromCamera(mouse, camera);
-
-    // Проверяем пересечения с объектами
-    const intersects = raycaster.intersectObjects(hexObjects.map(hex => hex.hexMesh));
-
-    console.log(intersects);
-    if (intersects.length > 0) {
-        // Получаем первый найденный объект
-        const hex = intersects[0].object.userData.hexObject;
-
-        // Обновляем глобальные переменные
-        fats += hex.fats;
-        proteins += hex.proteins;
-        carbohydrates += hex.carbohydrates;
-
-        // Обновляем значения на странице
-        document.getElementById('proteinValue').textContent = proteins;
-        document.getElementById('fatValue').textContent = fats;
-        document.getElementById('carboValue').textContent = carbohydrates;
-
-        // Перемещаем объект к целевой позиции (если необходимо)
-        hex.moveToTarget();
-    }
-}
-
-
 
 // Функция для наклона всех объектов на сцене
 function tiltAllHexes(angle) {
@@ -164,10 +93,49 @@ function animate() {
     renderer.render(scene, camera);
 }
 
+function onMouseClick(event) {
+    const mouse = new THREE.Vector2(
+        (event.clientX / window.innerWidth) * 2 - 1,
+        -(event.clientY / window.innerHeight) * 2 + 1
+    );
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, camera);
+
+    const intersects = raycaster.intersectObjects(hexObjects.map(hex => hex.hexMesh));
+
+    if (intersects.length > 0) {
+        const intersectedHex = intersects[0].object;
+        const hexObject = hexObjects.find(hex => hex.hexMesh === intersectedHex);
+
+        if (hexObject) {
+            // Перемещаем объект из mainGrid в cartGrid
+            cartGrid.moveHexObject(mainGrid, hexObject, scene);
+            scene.remove(intersectedHex); // Убираем объект из сцены
+            cartGrid.getHexObjects().forEach(hex => {
+                scene.add(hex.hexMesh); // Добавляем объект в корзину
+            });
+        } else {
+            // Если hexObject не найден, это означает, что объект уже в корзине
+            const cartHexObject = cartGrid.getHexObjects().find(hex => hex.hexMesh === intersectedHex);
+            if (cartHexObject) {
+                // Перемещаем объект из cartGrid обратно в mainGrid
+                mainGrid.moveHexObject(cartGrid, cartHexObject, scene);
+                scene.remove(intersectedHex); // Убираем объект из сцены
+                mainGrid.getHexObjects().forEach(hex => {
+                    scene.add(hex.hexMesh); // Добавляем объект обратно в основную сетку
+                });
+            }
+        }
+    }
+}
+
+
+
 // Запускаем инициализацию
 init();
 
 // Запускаем анимацию
 animate();
 
-tiltAllHexes(40);
+tiltAllHexes(27);

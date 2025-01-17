@@ -13,14 +13,35 @@
             position: absolute;
             top: 10px;
             left: 10px;
-            z-index: 1;
+            z-index: 10; /* Увеличиваем z-index для отображения поверх сцены */
+        }
+        #info {
+            position: absolute;
+            top: 100px; /* Позиция под кнопками */
+            left: 10px;
+            z-index: 10; /* Увеличиваем z-index для отображения поверх сцены */
+            color: white;
+            background-color: rgba(0, 0, 0, 0.7); /* Полупрозрачный фон для читаемости */
+            padding: 10px;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
     <div id="buttonContainer">
-        <div id="currencyDisplay">Валюта: 0</div>
-        <button id="categoryButton">Жиры</button>
+        <button onclick="setCategory('жиры')">Жиры</button>
+        <button onclick="setCategory('белки')">Белки</button>
+        <button onclick="setCategory('углеводы')">Углеводы</button>
+        <button onclick="setCategory('овощи')">Овощи</button>
+        <button onclick="setCategory('хрустящие')">Хрустящие</button>
+        <button onclick="setCategory('мягкое')">Мягкое</button>
+        <button onclick="setCategory('сладкое')">Сладкое</button>
+        <button onclick="setCategory(null)">Сбросить фильтр</button>
+    </div>
+    <div id="info">
+        <p>Белки: <span id="proteinValue">0</span></p>
+        <p>Жиры: <span id="fatValue">0</span></p>
+        <p>Углеводы: <span id="carboValue">0</span></p>
     </div>
     <canvas id="canvas"></canvas>
     <script src="https://threejs.org/examples/fonts/helvetiker_regular.typeface.json"></script>

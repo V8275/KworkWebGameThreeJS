@@ -26,22 +26,26 @@ export class HexGrid {
     positionHex(hex) {
         const hexWidth = 1; // Ширина одного гекса
         const hexHeight = 0.5; // Высота одного гекса
-
+    
         const index = this.hexObjects.indexOf(hex);
         const row = Math.floor(index / 5); // Количество гексов в ряду
         const col = index % 5; // Индекс гекса в ряду
-
+    
         // Смещение по оси X и Y
         const xOffset = (col * hexWidth) - (2 * hexWidth) + (row % 2) * (hexWidth / 2);
         const yOffset = (row * hexHeight);
-
+    
         // Устанавливаем позицию с учетом центра
-        hex.hexMesh.position.set(
+        const newPosition = new THREE.Vector3(
             xOffset + this.center.x,
             yOffset + 1 + this.center.y,
             this.center.z
         );
+    
+        hex.hexMesh.position.copy(newPosition); // Обновляем позицию гекса
+        return newPosition; // Возвращаем новую позицию
     }
+    
 
     getHexObjects() {
         return this.hexObjects;
@@ -57,13 +61,18 @@ export class HexGrid {
             // Добавляем объект в текущий класс
             this.hexObjects.push(hexObject);
             
-            // Обновляем позицию объекта
-            this.positionHex(hexObject); // Пересчитываем позицию
+            // Устанавливаем целевую позицию для анимации
+            hexObject.setTarget(this.positionHex(hexObject)); // Установите позицию в текущем классе
             
-            // Добавляем объект в сцену
-            scene.add(hexObject.hexMesh);
+            // Запускаем анимацию перемещения
+            hexObject.moveToTarget(() => {
+                // Добавляем объект в сцену после завершения анимации
+                scene.add(hexObject.hexMesh);
+                console.log('Перемещение завершено.');
+            });
         } else {
             console.error('Объект не найден в исходном классе.');
         }
     }
+    
 }

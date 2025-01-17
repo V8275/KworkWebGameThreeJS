@@ -67,31 +67,25 @@ export class HexObject {
         // Запускаем анимацию
         this.animateMovement(callback);
     }
-
+    
     animateMovement(callback) {
         const animationSpeed = 0.1; // Скорость анимации
         const target = new THREE.Vector3(this.targetPosition.x, this.targetPosition.y, this.targetPosition.z);
-
+        
         const animate = () => {
-            // Линейная интерполяция для плавного движения
             this.currentPosition.lerp(target, animationSpeed);
             this.hexMesh.position.copy(this.currentPosition);
-
-            // Проверяем, достигли ли мы целевой позиции
+            
             if (this.currentPosition.distanceTo(target) > 0.01) {
                 requestAnimationFrame(animate);
             } else {
-                // Убедитесь, что объект точно на целевой позиции
                 this.hexMesh.position.copy(target);
-                this.currentPosition.copy(target);
-                
-                // Вызываем callback, когда анимация завершена
-                if (callback) {
-                    callback();
-                }
+                this.currentPosition.copy(target); // Сохраняем текущую позицию
+                callback(); // Вызываем callback по завершении анимации
             }
         };
-
-        requestAnimationFrame(animate);
+        animate();
     }
+    
+    
 }

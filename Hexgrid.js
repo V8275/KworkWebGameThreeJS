@@ -74,31 +74,37 @@ export class HexGrid {
         return this.hexObjects;
     }
 
-    moveHexObject(sourceGrid, hexObject, scene, tempGrid) {
+    moveHexObject(sourceGrid, hexObject, scene, callback) {
         const index = sourceGrid.hexObjects.indexOf(hexObject);
         if (index !== -1) {
             // Удаляем объект из исходного грида
             sourceGrid.hexObjects.splice(index, 1);
-
+    
             // Добавляем объект в текущий грид
             this.hexObjects.push(hexObject);
-
+    
             // Устанавливаем целевую позицию для анимации
             hexObject.setTarget(this.positionHex(hexObject)); // Устанавливаем позицию в текущем классе
-
+    
             // Запускаем анимацию перемещения
             hexObject.moveToTarget(() => {
                 // Добавляем объект в сцену после завершения анимации
                 scene.add(hexObject.hexMesh);
                 console.log('Перемещение завершено.');
-
+    
                 // Пересчитываем позиции всех гексов в целевом гриде
                 this.updateHexPositions(); // Обновляем позиции всех гексов
+    
+                // Вызов callback, если он передан
+                if (callback && typeof callback === 'function') {
+                    callback(hexObject); // Передаем перемещенный объект как аргумент
+                }
             });
         } else {
             console.error('Объект не найден в исходном классе.');
         }
     }
+    
 
 
     updateHexPositions(tempGrid) {

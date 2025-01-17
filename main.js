@@ -72,6 +72,7 @@ function placeIngredientsOnHexagons() {
         { fats: 10, proteins: 2, carbohydrates: 50, categories: ['жиры', 'хрустящие'] },
         { fats: 0, proteins: 2, carbohydrates: 60, categories: ['сладкое', 'углеводы'] },
         { fats: 6, proteins: 3, carbohydrates: 16, categories: ['жиры', 'сладкое'] },
+        
         // Добавьте другие ингредиенты здесь
     ];
     cartGrid = new HexGrid(null, new THREE.Vector3(0, -3, 0), 27);
@@ -95,10 +96,9 @@ function onMouseClick(event) {
     const raycaster = new THREE.Raycaster();
     raycaster.setFromCamera(mouse, camera);
 
-    // Проверяем пересечения с объектами в основном гриде, исключая временные объекты
     const mainIntersects = raycaster.intersectObjects(
         hexObjects
-            .filter(hex => !tempGrid.includes(hex)) // Исключаем невидимые гексы
+            .filter(hex => !tempGrid.includes(hex))
             .map(hex => hex.hexMesh)
     );
 
@@ -109,11 +109,20 @@ function onMouseClick(event) {
         const hexObject = hexObjects.find(hex => hex.hexMesh === intersectedHex);
 
         if (hexObject) {
+            // Добавляем значения в cart
+            fats += hexObject.fats;
+            proteins += hexObject.proteins;
+            carbohydrates += hexObject.carbohydrates;
+
+            updateNutrientDisplay();
+
             // Перемещаем объект из mainGrid в cartGrid
-            cartGrid.moveHexObject(mainGrid, hexObject, scene, tempGrid);
-            scene.remove(intersectedHex); // Убираем объект из сцены
+            cartGrid.moveHexObject(mainGrid, hexObject, scene, (movedHex) => {
+                updateVisibleHexes();
+            });;
+            scene.remove(intersectedHex);
             cartGrid.getHexObjects().forEach(hex => {
-                scene.add(hex.hexMesh); // Добавляем объект в корзину
+                scene.add(hex.hexMesh);
             });
         }
     } else if (cartIntersects.length > 0) {
@@ -121,14 +130,27 @@ function onMouseClick(event) {
         const cartHexObject = cartGrid.getHexObjects().find(hex => hex.hexMesh === intersectedHex);
 
         if (cartHexObject) {
+            // Вычитаем значения из cart
+            fats -= cartHexObject.fats;
+            proteins -= cartHexObject.proteins;
+            carbohydrates -= cartHexObject.carbohydrates;
+
+            updateNutrientDisplay();
+
             // Перемещаем объект из cartGrid обратно в mainGrid
             mainGrid.moveHexObject(cartGrid, cartHexObject, scene, tempGrid);
-            scene.remove(intersectedHex); // Убираем объект из сцены
+            scene.remove(intersectedHex);
             mainGrid.getHexObjects().forEach(hex => {
-                scene.add(hex.hexMesh); // Добавляем объект обратно в основную сетку
+                scene.add(hex.hexMesh);
             });
         }
     }
+}
+
+function updateNutrientDisplay() {
+    document.getElementById('proteinValue').innerText = proteins;
+    document.getElementById('fatValue').innerText = fats;
+    document.getElementById('carboValue').innerText = carbohydrates;
 }
 
 

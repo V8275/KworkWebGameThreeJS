@@ -4,7 +4,7 @@ let hexObjects = []; // Массив для хранения объектов He
 let mainGrid, cartGrid;
 let currentCategory = null; // Переменная для хранения текущей категории
 let tempGrid = []; // Глобальный массив для хранения невидимых гексов
-
+let aspect;
 
 // Импортируем функции из других файлов
 import { HexGrid } from './Hexgrid.js';
@@ -13,14 +13,14 @@ import { HexGrid } from './Hexgrid.js';
 function init() {
     // Создаем сцену, камеру и рендерер
     scene = new THREE.Scene();
-    const aspect = window.innerWidth / window.innerHeight;
+    aspect = window.innerWidth / window.innerHeight; // Инициализация глобальной переменной aspect
     const frustumSize = 10; // Размер фрустрации
     camera = new THREE.OrthographicCamera(
-        frustumSize * aspect / - 2, 
-        frustumSize * aspect / 2, 
-        frustumSize / 2, 
-        frustumSize / - 2, 
-        1, 
+        frustumSize * aspect / -2,
+        frustumSize * aspect / 2,
+        frustumSize / 2,
+        frustumSize / -2,
+        1,
         1000
     );
     renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas') });
@@ -44,14 +44,14 @@ function init() {
     placeIngredientsOnHexagons();
 
     // Добавляем обработчик кликов
-     window.addEventListener('click', onMouseClick);
+    window.addEventListener('click', onMouseClick);
 }
 
 // Функция для размещения ингредиентов на гексах
 function placeIngredientsOnHexagons() {
     const ingredients = [
-        {fats: 5, proteins: 30, carbohydrates: 0, categories: ['белки'] },
-        
+        { fats: 5, proteins: 30, carbohydrates: 0, categories: ['белки'] },
+
         { fats: 10, proteins: 25, carbohydrates: 0, categories: ['белки'] },
         { fats: 15, proteins: 20, carbohydrates: 0, categories: ['жиры', 'белки'] },
         { fats: 20, proteins: 3, carbohydrates: 12, categories: ['жиры', 'овощи'] },
@@ -72,7 +72,7 @@ function placeIngredientsOnHexagons() {
         { fats: 10, proteins: 2, carbohydrates: 50, categories: ['жиры', 'хрустящие'] },
         { fats: 0, proteins: 2, carbohydrates: 60, categories: ['сладкое', 'углеводы'] },
         { fats: 6, proteins: 3, carbohydrates: 16, categories: ['жиры', 'сладкое'] },
-        
+
         // Добавьте другие ингредиенты здесь
     ];
     cartGrid = new HexGrid(null, new THREE.Vector3(0, -3, 0), 27);
@@ -138,7 +138,9 @@ function onMouseClick(event) {
             updateNutrientDisplay();
 
             // Перемещаем объект из cartGrid обратно в mainGrid
-            mainGrid.moveHexObject(cartGrid, cartHexObject, scene, tempGrid);
+            mainGrid.moveHexObject(cartGrid, cartHexObject, scene, (movedHex) => {
+                updateVisibleHexes();
+            });
             scene.remove(intersectedHex);
             mainGrid.getHexObjects().forEach(hex => {
                 scene.add(hex.hexMesh);
@@ -154,7 +156,7 @@ function updateNutrientDisplay() {
 }
 
 
-window.setCategory = function(category) {
+window.setCategory = function (category) {
     currentCategory = category; // Обновляем текущую категорию
     updateVisibleHexes(); // Обновляем видимые гексы
 };
@@ -179,6 +181,9 @@ function updateVisibleHexes() {
         return isVisible;
     });
 
+    // Перемещаем объект из cartGrid обратно в mainGrid
+    
+
     mainGrid.removeHexObjects(getHiddenHexes());
 
     // Обновляем позиции видимых гексов
@@ -186,12 +191,31 @@ function updateVisibleHexes() {
         mainGrid.updateHexPositions(tempGrid);
         scene.add(hex.hexMesh); // Добавляем гекс в сцену
     });
-    
+
     console.log(getHiddenHexes());
+    updateCameraScale();
     console.log(`Количество объектов в mainGrid: ${getMainGridObjectCount()}`);
     // Обновляем позиции всех гексов в mainGrid, если это необходимо
-     // Это может быть не нужно, если позиции уже установлены
+    // Это может быть не нужно, если позиции уже установлены
 }
+
+function updateCameraScale() {
+    const hexCount = mainGrid.hexObjects.filter(hex => {
+        return !tempGrid.includes(hex) && (currentCategory ? hex.categories.includes(currentCategory) : true);
+    }).length;
+
+    // Увеличиваем масштаб, если гексов мало, и уменьшаем, если много
+    const scaleFactor = Math.max(1, Math.min(20, hexCount / 12)) * 0.55; // Примерная формула для расчета масштаба
+    const frustumSize = 10 * scaleFactor; // Изменяем размер фрустрации в зависимости от масштаба
+
+    camera.left = frustumSize * aspect / -2;
+    camera.right = frustumSize * aspect / 2;
+    camera.top = frustumSize / 2;
+    camera.bottom = frustumSize / -2;
+    camera.updateProjectionMatrix(); // Обновляем матрицу проекции камеры
+}
+
+
 
 function getHiddenHexes() {
     return tempGrid; // Возвращаем массив скрытых гексов

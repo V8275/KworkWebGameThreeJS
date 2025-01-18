@@ -5,6 +5,10 @@ let mainGrid, cartGrid;
 let currentCategory = null; // Переменная для хранения текущей категории
 let tempGrid = []; // Глобальный массив для хранения невидимых гексов
 let aspect;
+let targetScale = 1; // Желаемый масштаб
+let currentScale = 1; // Текущий масштаб
+const scaleSpeed = 0.1; // Скорость изменения масштаба
+
 
 // Импортируем функции из других файлов
 import { HexGrid } from './Hexgrid.js';
@@ -81,9 +85,9 @@ function placeIngredientsOnHexagons() {
     updateVisibleHexes(); // Обновляем видимые гексы после инициализации
 }
 
-// Функция анимации
 function animate() {
     requestAnimationFrame(animate);
+    updateCameraScale(); // Вызываем обновление масштаба камеры
     renderer.render(scene, camera);
 }
 
@@ -204,9 +208,13 @@ function updateCameraScale() {
         return !tempGrid.includes(hex) && (currentCategory ? hex.categories.includes(currentCategory) : true);
     }).length;
 
-    // Увеличиваем масштаб, если гексов мало, и уменьшаем, если много
-    const scaleFactor = Math.max(1, Math.min(20, hexCount / 12)) * 0.55; // Примерная формула для расчета масштаба
-    const frustumSize = 10 * scaleFactor; // Изменяем размер фрустрации в зависимости от масштаба
+    // Рассчитываем желаемый масштаб
+    targetScale = Math.max(1, Math.min(20, hexCount / 12)) * 0.55; 
+
+    // Плавно изменяем текущий масштаб
+    currentScale += (targetScale - currentScale) * scaleSpeed;
+
+    const frustumSize = 10 * currentScale; // Изменяем размер фрустрации в зависимости от текущего масштаба
 
     camera.left = frustumSize * aspect / -2;
     camera.right = frustumSize * aspect / 2;
@@ -214,6 +222,7 @@ function updateCameraScale() {
     camera.bottom = frustumSize / -2;
     camera.updateProjectionMatrix(); // Обновляем матрицу проекции камеры
 }
+
 
 
 

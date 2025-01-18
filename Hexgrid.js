@@ -49,25 +49,47 @@ export class HexGrid {
     }
 
     addHexObjects(newHexObjects) {
+        // Проверяем, что переданный массив не пустой
+        if (!Array.isArray(newHexObjects) || newHexObjects.length === 0) {
+            console.warn('Передан пустой массив или некорректный тип данных.');
+            return;
+        }
+    
         newHexObjects.forEach(ingredient => {
-            const hex = new HexObject(ingredient.model, ingredient.fats, ingredient.proteins, ingredient.carbohydrates, ingredient.categories, this.rotAngle);
-
+            // Создаем новый HexObject на основе ингредиента
+            const hex = new HexObject(
+                ingredient.model,
+                ingredient.fats,
+                ingredient.proteins,
+                ingredient.carbohydrates,
+                ingredient.categories,
+                this.rotAngle
+            );
+    
+            // Добавляем категории к объекту
             ingredient.categories.forEach(category => hex.addCategory(category));
+    
             // Добавляем созданный объект в массив
             this.hexObjects.push(hex);
-
+    
+            // Устанавливаем позицию для нового гекса
             this.positionHex(hex);
         });
+    
+        // Обновляем позиции всех гексов после добавления
+        this.updateHexPositions();
     }
+    
 
     removeHexObjects(hexObjectsToRemove) {
-        hexObjectsToRemove.forEach(hexToRemove => {
-            const index = this.hexObjects.indexOf(hexToRemove);
-            if (index !== -1) {
-                // Удаляем объект из массива
-                this.hexObjects.splice(index, 1);
-            }
-        });
+        if (hexObjectsToRemove)
+            hexObjectsToRemove.forEach(hexToRemove => {
+                const index = this.hexObjects.indexOf(hexToRemove);
+                if (index !== -1) {
+                    // Удаляем объект из массива
+                    this.hexObjects.splice(index, 1);
+                }
+            });
     }
 
     getHexObjects() {
@@ -79,22 +101,22 @@ export class HexGrid {
         if (index !== -1) {
             // Удаляем объект из исходного грида
             sourceGrid.hexObjects.splice(index, 1);
-    
+
             // Добавляем объект в текущий грид
             this.hexObjects.push(hexObject);
-    
+
             // Устанавливаем целевую позицию для анимации
             hexObject.setTarget(this.positionHex(hexObject)); // Устанавливаем позицию в текущем классе
-    
+
             // Запускаем анимацию перемещения
             hexObject.moveToTarget(() => {
                 // Добавляем объект в сцену после завершения анимации
                 scene.add(hexObject.hexMesh);
                 console.log('Перемещение завершено.');
-    
+
                 // Пересчитываем позиции всех гексов в целевом гриде
                 this.updateHexPositions(); // Обновляем позиции всех гексов
-    
+
                 // Вызов callback, если он передан
                 if (callback && typeof callback === 'function') {
                     callback(hexObject); // Передаем перемещенный объект как аргумент
@@ -104,7 +126,7 @@ export class HexGrid {
             console.error('Объект не найден в исходном классе.');
         }
     }
-    
+
 
 
     updateHexPositions(tempGrid) {

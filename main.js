@@ -3,11 +3,12 @@ let scene, camera, renderer, fats = 0, proteins = 0, carbohydrates = 0;
 let hexObjects = []; // Массив для хранения объектов HexObject
 let mainGrid, cartGrid;
 let currentCategory = null; // Переменная для хранения текущей категории
-let tempGrid = []; // Глобальный массив для хранения невидимых гексов
+let tempGrid; // Глобальный массив для хранения невидимых гексов
 let aspect;
 let targetScale = 1; // Желаемый масштаб
 let currentScale = 1; // Текущий масштаб
 const scaleSpeed = 0.1; // Скорость изменения масштаба
+let risingHexes = [];
 
 
 // Импортируем функции из других файлов
@@ -79,6 +80,7 @@ function placeIngredientsOnHexagons() {
 
         // Добавьте другие ингредиенты здесь
     ];
+    tempGrid = new HexGrid(null, new THREE.Vector3(0, 30, 0), 27);
     cartGrid = new HexGrid(null, new THREE.Vector3(0, -3, 0), 27);
     mainGrid = new HexGrid(ingredients, new THREE.Vector3(0, 0, 0), 27); // Передаем ингредиенты в HexGrid
     hexObjects = mainGrid.getHexObjects(); // Получаем массив объектов
@@ -88,6 +90,7 @@ function placeIngredientsOnHexagons() {
 function animate() {
     requestAnimationFrame(animate);
     updateCameraScale(); // Вызываем обновление масштаба камеры
+    animateRisingHexes(); // Вызываем анимацию поднятия
     renderer.render(scene, camera);
 }
 
@@ -175,18 +178,22 @@ function updateVisibleHexes() {
 
     // Очищаем временный массив
     tempGrid = [];
+    const tempMain = mainGrid;
 
     // Фильтруем гексы по текущей категории
     const filteredHexes = mainGrid.hexObjects.filter(hex => {
         const isVisible = currentCategory ? hex.categories.includes(currentCategory) : true;
         if (!isVisible) {
             tempGrid.push(hex); // Добавляем невидимые гексы в tempGrid
+            risingHexes.push(hex); // Добавляем в массив поднимающихся гексов
+            if(mainGrid.positionHex(hex) != (tempMain.positionHex(hex)))
+            hex.setTarget(mainGrid.positionHex(hex));
+            hex.moveToTarget(() => {});
+            scene.add(hex.hexMesh); // Добавляем гекс в сцену
+            hex.hexMesh.position.y = 0; // Начальная позиция для поднятия
         }
         return isVisible;
     });
-
-    // Перемещаем объект из cartGrid обратно в mainGrid
-    
 
     mainGrid.removeHexObjects(getHiddenHexes());
 
@@ -223,6 +230,18 @@ function updateCameraScale() {
     camera.updateProjectionMatrix(); // Обновляем матрицу проекции камеры
 }
 
+function animateRisingHexes() {
+    risingHexes.forEach(hex => {
+        // Устанавливаем максимальную высоту, на которую гекс может подняться
+        const targetHeight = 30;
+
+        // Проверяем, если гекс еще не достиг целевой высоты
+        if (hex.hexMesh.position.y < targetHeight) {
+            // Поднимаем гекс с текущей позиции
+            hex.hexMesh.position.y += 0.1; // Поднимаем гекс
+        }
+    });
+}
 
 
 
